@@ -1,38 +1,48 @@
+<!-- src/views/Register.vue -->
 <template>
-  <div class="register">
+  <el-card class="login-card">
     <h2>注册</h2>
-    <form @submit.prevent="handleRegister">
-      <input v-model="name" placeholder="姓名" required />
-      <input v-model="email" type="email" placeholder="邮箱" required />
-      <input v-model="password" type="password" placeholder="密码" required />
-      <button type="submit">注册</button>
-    </form>
-  </div>
+    <el-form :model="form">
+      <el-form-item label="用户名">
+        <el-input v-model="form.username" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input v-model="form.password" type="password" />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="handleRegister">注册</el-button>
+        <el-button type="text" @click="$router.push('/login')">已有账号？登录</el-button>
+      </el-form-item>
+    </el-form>
+  </el-card>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      name: '',
-      email: '',
-      password: ''
-    }
-  },
-  methods: {
-    async handleRegister() {
-      const res = await fetch('https://laosecom.onrender.com/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: this.name,
-          email: this.email,
-          password: this.password
-        })
-      })
-      const data = await res.json()
-      alert(JSON.stringify(data))
-    }
+<script setup>
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const form = ref({
+  username: '',
+  password: ''
+})
+
+const handleRegister = async () => {
+  try {
+    await axios.post('https://laosecom.onrender.com/api/user/register', form.value)
+    alert('注册成功，请登录')
+    router.push('/login')
+  } catch (err) {
+    alert(err.response?.data?.message || '注册失败')
   }
 }
 </script>
+
+<style scoped>
+.login-card {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 20px;
+}
+</style>

@@ -1,32 +1,48 @@
+<!-- src/views/Login.vue -->
 <template>
-  <div class="login">
+  <el-card class="login-card">
     <h2>登录</h2>
-    <form @submit.prevent="handleLogin">
-      <input v-model="email" type="email" placeholder="邮箱" required />
-      <input v-model="password" type="password" placeholder="密码" required />
-      <button type="submit">登录</button>
-    </form>
-  </div>
+    <el-form :model="form">
+      <el-form-item label="用户名">
+        <el-input v-model="form.username" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input v-model="form.password" type="password" />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="handleLogin">登录</el-button>
+        <el-button type="text" @click="$router.push('/register')">没有账号？注册</el-button>
+      </el-form-item>
+    </el-form>
+  </el-card>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      email: '',
-      password: ''
-    }
-  },
-  methods: {
-    async handleLogin() {
-      const res = await fetch('https://laosecom.onrender.com/api/user/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: this.email, password: this.password })
-      })
-      const data = await res.json()
-      alert(JSON.stringify(data))
-    }
+<script setup>
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const form = ref({
+  username: '',
+  password: ''
+})
+
+const handleLogin = async () => {
+  try {
+    const res = await axios.post('https://laosecom.onrender.com/api/user/login', form.value)
+    localStorage.setItem('token', res.data.token)
+    router.push('/home')
+  } catch (err) {
+    alert(err.response?.data?.message || '登录失败')
   }
 }
 </script>
+
+<style scoped>
+.login-card {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 20px;
+}
+</style>

@@ -1,12 +1,14 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../pages/Home.vue'
-import Login from '../pages/Login.vue'
-import Register from '../pages/Register.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+import Home from '../views/Home.vue'
 
 const routes = [
-  { path: '/', component: Home },
+  { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
-  { path: '/register', component: Register }
+  { path: '/register', component: Register },
+  { path: '/home', component: Home }
 ]
 
 const router = createRouter({

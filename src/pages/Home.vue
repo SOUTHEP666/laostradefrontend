@@ -1,14 +1,9 @@
+<!-- src/views/Home.vue -->
 <template>
-  <div class="home">
-    <h1>欢迎来到客户首页</h1>
-    <p>这是你的首页内容。</p>
-    <router-link to="/login">登录</router-link> |
-    <router-link to="/register">注册</router-link>
-  </div>
+  <h2>欢迎回来！这是首页</h2>
+  <p>你已经登录，token: {{ token }}</p>
 </template>
 
-<script>
-export default {
-  name: 'Home'
-}
+<script setup>
+const token = localStorage.getItem('token') || '未登录'
 </script>
