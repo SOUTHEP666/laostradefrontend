@@ -6,6 +6,9 @@
       <el-form-item label="用户名">
         <el-input v-model="form.username" />
       </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model="form.email" />
+      </el-form-item>
       <el-form-item label="密码">
         <el-input v-model="form.password" type="password" />
       </el-form-item>
@@ -25,6 +28,7 @@ const router = useRouter()
 
 const form = ref({
   username: '',
+  email: '',
   password: ''
 })
 
