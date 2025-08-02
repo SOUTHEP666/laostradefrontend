@@ -1,10 +1,12 @@
-<!-- src/views/Login.vue -->
 <template>
   <el-card class="login-card">
     <h2>登录</h2>
     <el-form :model="form">
       <el-form-item label="用户名">
         <el-input v-model="form.username" />
+      </el-form-item>
+      <el-form-item label="邮箱">
+        <el-input v-model="form.email" />
       </el-form-item>
       <el-form-item label="密码">
         <el-input v-model="form.password" type="password" />
@@ -25,6 +27,7 @@ const router = useRouter()
 
 const form = ref({
   username: '',
+  email: '',
   password: ''
 })
 
