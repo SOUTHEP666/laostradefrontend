@@ -19,7 +19,7 @@ export default {
   },
   methods: {
     async handleLogin() {
-      const res = await fetch('https://laosecom.onrender.com/api/users/login', {
+      const res = await fetch('https://laosecom.onrender.com/api/user/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: this.email, password: this.password })
