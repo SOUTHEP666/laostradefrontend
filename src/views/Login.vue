@@ -41,7 +41,7 @@ const onSubmit = () => {
       const res = await login(form.value);
       localStorage.setItem("token", res.data.token);
       ElMessage.success("登录成功");
-      router.push("/profile");
+      router.push("/home");
     } catch (error) {
       ElMessage.error(error.response?.data?.message || "登录失败");
     }
