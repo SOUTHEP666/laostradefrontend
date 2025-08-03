@@ -1,19 +1,20 @@
-// src/router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
-import Home from '../views/Home.vue'
+import { createRouter, createWebHistory } from "vue-router";
+import Register from "../views/Register.vue";
+import Login from "../views/Login.vue";
+import Profile from "../views/Profile.vue";
+import ChangePassword from "../views/ChangePassword.vue";
 
 const routes = [
-  { path: '/', redirect: '/login' },
-  { path: '/login', component: Login },
-  { path: '/register', component: Register },
-  { path: '/home', component: Home }
-]
+  { path: "/", redirect: "/login" },
+  { path: "/register", component: Register },
+  { path: "/login", component: Login },
+  { path: "/profile", component: Profile },
+  { path: "/change-password", component: ChangePassword },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
 
-export default router
+export default router;

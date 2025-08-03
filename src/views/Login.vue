@@ -1,51 +1,62 @@
 <template>
-  <el-card class="login-card">
+  <el-card class="form-card">
     <h2>登录</h2>
-    <el-form :model="form">
-      <el-form-item label="用户名">
-        <el-input v-model="form.username" />
+    <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+      <el-form-item label="账号" prop="identifier">
+        <el-input v-model="form.identifier" autocomplete="off" placeholder="用户名或邮箱" />
       </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="form.email" />
-      </el-form-item>
-      <el-form-item label="密码">
-        <el-input v-model="form.password" type="password" />
+      <el-form-item label="密码" prop="password">
+        <el-input v-model="form.password" autocomplete="off" show-password type="password" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="handleLogin">登录</el-button>
-        <el-button type="text" @click="$router.push('/register')">没有账号？注册</el-button>
+        <el-button type="primary" @click="onSubmit">登录</el-button>
+        <el-button @click="goRegister">去注册</el-button>
       </el-form-item>
     </el-form>
   </el-card>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
-const router = useRouter()
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { login } from "../api/user.js";
 
+const router = useRouter();
+const formRef = ref(null);
 const form = ref({
-  username: '',
-  email: '',
-  password: ''
-})
+  identifier: "",
+  password: "",
+});
 
-const handleLogin = async () => {
-  try {
-    const res = await axios.post('https://laosecom.onrender.com/api/user/login', form.value)
-    localStorage.setItem('token', res.data.token)
-    router.push('/home')
-  } catch (err) {
-    alert(err.response?.data?.message || '登录失败')
-  }
-}
+const rules = {
+  identifier: [{ required: true, message: "请输入用户名或邮箱", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
+
+const onSubmit = () => {
+  formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    try {
+      const res = await login(form.value);
+      localStorage.setItem("token", res.data.token);
+      ElMessage.success("登录成功");
+      router.push("/profile");
+    } catch (error) {
+      ElMessage.error(error.response?.data?.message || "登录失败");
+    }
+  });
+};
+
+const goRegister = () => {
+  router.push("/register");
+};
 </script>
 
 <style scoped>
-.login-card {
+.form-card {
   max-width: 400px;
-  margin: 100px auto;
+  margin: 60px auto;
   padding: 20px;
 }
 </style>
