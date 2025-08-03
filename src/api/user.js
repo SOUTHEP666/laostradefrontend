@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://laosecom.onrender.com/api/user";
+const BASE_URL = "https://laosecom.onrender.com/api/users";
 
 export function register(data) {
   return axios.post(`${BASE_URL}/register`, data);
