@@ -1,77 +1,118 @@
 <template>
-  <el-card class="form-card">
-    <h2>{{ $t('login.title') }}</h2>
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-      <el-form-item :label="$t('login.account')" prop="identifier">
-        <el-input
-          v-model="form.identifier"
-          autocomplete="off"
-          :placeholder="$t('login.placeholder.account')"
-        />
-      </el-form-item>
-      <el-form-item :label="$t('login.password')" prop="password">
-        <el-input
-          v-model="form.password"
-          autocomplete="off"
-          show-password
-          type="password"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">{{ $t('login.submit') }}</el-button>
-        <el-button @click="goRegister">{{ $t('login.register') }}</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+  <div class="auth-container">
+    <h2>{{ isRegister ? "注册" : "登录" }}</h2>
+    <form @submit.prevent="handleSubmit">
+      <div class="form-item">
+        <label>用户名：</label>
+        <input v-model="form.username" type="text" required />
+      </div>
+
+      <div class="form-item">
+        <label>密码：</label>
+        <input v-model="form.password" type="password" required />
+      </div>
+
+      <div v-if="isRegister" class="form-item">
+        <label>角色：</label>
+        <select v-model="form.role">
+          <option value="buyer">买家</option>
+          <option value="seller">商家</option>
+        </select>
+      </div>
+
+      <button type="submit">{{ isRegister ? "注册" : "登录" }}</button>
+      <button type="button" @click="toggleMode">
+        切换到 {{ isRegister ? "登录" : "注册" }}
+      </button>
+    </form>
+
+    <p v-if="message" class="message">{{ message }}</p>
+  </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { useI18n } from 'vue-i18n'
-import { login } from "../api/user.js";
+import axios from "axios";
 
-const { t } = useI18n();
-const router = useRouter();
-const formRef = ref(null);
+const BASE_URL = "https://laostrade.onrender.com/api";
+
+const isRegister = ref(false);
+const message = ref("");
+
 const form = ref({
-  identifier: "",
+  username: "",
   password: "",
+  role: "buyer",
 });
 
-const rules = {
-  identifier: [
-    { required: true, message: t('login.validate.account'), trigger: "blur" },
-  ],
-  password: [
-    { required: true, message: t('login.validate.password'), trigger: "blur" },
-  ],
-};
+function toggleMode() {
+  isRegister.value = !isRegister.value;
+  message.value = "";
+  // 清空表单数据
+  form.value = { username: "", password: "", role: "buyer" };
+}
 
-const onSubmit = () => {
-  formRef.value.validate(async (valid) => {
-    if (!valid) return;
-    try {
-      const res = await login(form.value);
+async function handleSubmit() {
+  message.value = "";
+  try {
+    if (isRegister.value) {
+      const res = await axios.post(`${BASE_URL}/auth/register`, form.value);
+      message.value = res.data.message || "注册成功！";
+    } else {
+      const res = await axios.post(`${BASE_URL}/auth/login`, {
+        username: form.value.username,
+        password: form.value.password,
+      });
+      message.value = "登录成功！Token: " + res.data.token;
       localStorage.setItem("token", res.data.token);
-      ElMessage.success(t('login.success'));
-      router.push("/home");
-    } catch (error) {
-      ElMessage.error(error.response?.data?.message || t('login.failed'));
+      // 这里可以触发登录后跳转等操作
     }
-  });
-};
-
-const goRegister = () => {
-  router.push("/register");
-};
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.message) {
+      message.value = err.response.data.message;
+    } else {
+      message.value = "请求失败，请重试";
+    }
+  }
+}
 </script>
 
 <style scoped>
-.form-card {
+.auth-container {
   max-width: 400px;
-  margin: 60px auto;
+  margin: 40px auto;
   padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.form-item input,
+.form-item select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+button {
+  margin-right: 10px;
+  padding: 8px 16px;
+}
+
+.message {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
 }
 </style>

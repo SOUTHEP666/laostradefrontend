@@ -1,91 +1,98 @@
 <template>
-  <el-card class="form-card">
-    <h2>{{ $t('register.title') }}</h2>
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-      <el-form-item :label="$t('register.username')" prop="username">
-        <el-input v-model="form.username" autocomplete="off" />
-      </el-form-item>
+  <div class="register-container">
+    <h2>用户注册</h2>
+    <form @submit.prevent="handleRegister">
+      <div class="form-item">
+        <label>用户名：</label>
+        <input v-model="form.username" type="text" required />
+      </div>
 
-      <el-form-item :label="$t('register.phone')" prop="phone">
-        <el-input v-model="form.phone" autocomplete="off" :placeholder="$t('register.phonePlaceholder')" />
-      </el-form-item>
+      <div class="form-item">
+        <label>密码：</label>
+        <input v-model="form.password" type="password" required />
+      </div>
 
-      <el-form-item :label="$t('register.email')" prop="email">
-        <el-input v-model="form.email" autocomplete="off" />
-      </el-form-item>
+      <div class="form-item">
+        <label>角色：</label>
+        <select v-model="form.role">
+          <option value="buyer">买家</option>
+          <option value="seller">商家</option>
+        </select>
+      </div>
 
-      <el-form-item :label="$t('register.password')" prop="password">
-        <el-input v-model="form.password" autocomplete="off" show-password type="password" />
-      </el-form-item>
+      <button type="submit">注册</button>
+    </form>
 
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">{{ $t('register.submit') }}</el-button>
-        <el-button @click="goLogin">{{ $t('register.toLogin') }}</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+    <p v-if="message" class="message">{{ message }}</p>
+  </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { useI18n } from 'vue-i18n';
-import { register } from "../api/user.js";
+import axios from "axios";
 
-const { t } = useI18n();
-const router = useRouter();
-const formRef = ref(null);
+const BASE_URL = "https://laostrade.onrender.com/api";
+
 const form = ref({
   username: "",
-  phone: "",
-  email: "",
   password: "",
+  role: "buyer",
 });
 
-const rules = {
-  username: [{ required: true, message: t('register.validate.username'), trigger: "blur" }],
-  phone: [
-    { required: true, message: t('register.validate.phoneRequired'), trigger: "blur" },
-    {
-      pattern: /^020\d{7,8}$/,
-      message: t('register.validate.phoneInvalid'),
-      trigger: "blur",
-    },
-  ],
-  email: [
-    { required: true, message: t('register.validate.emailRequired'), trigger: "blur" },
-    {
-      type: "email",
-      message: t('register.validate.emailInvalid'),
-      trigger: ["blur", "change"],
-    },
-  ],
-  password: [{ required: true, message: t('register.validate.password'), trigger: "blur" }],
-};
+const message = ref("");
 
-const onSubmit = () => {
-  formRef.value.validate(async (valid) => {
-    if (!valid) return;
-    try {
-      await register(form.value);
-      ElMessage.success(t('register.success'));
-      router.push("/login");
-    } catch (error) {
-      ElMessage.error(error.response?.data?.message || t('register.failed'));
+async function handleRegister() {
+  message.value = "";
+  try {
+    const res = await axios.post(`${BASE_URL}/auth/register`, form.value);
+    message.value = res.data.message || "注册成功！";
+    // 这里可以清空表单或跳转登录页
+    form.value = { username: "", password: "", role: "buyer" };
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.message) {
+      message.value = err.response.data.message;
+    } else {
+      message.value = "请求失败，请重试";
     }
-  });
-};
-
-const goLogin = () => {
-  router.push("/login");
-};
+  }
+}
 </script>
 
 <style scoped>
-.form-card {
+.register-container {
   max-width: 400px;
-  margin: 60px auto;
+  margin: 40px auto;
   padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.form-item input,
+.form-item select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 8px 16px;
+}
+
+.message {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
 }
 </style>

@@ -1,52 +1,29 @@
-// 文件：src/router/index.js
-
 import { createRouter, createWebHistory } from "vue-router";
 
-import HomeLayout from "../layouts/HomeLayout.vue";
-
-import Home from "../views/Home.vue";
-import Category from "../views/Category.vue";
-import Chat from "../views/Chat.vue";
-import Cart from "../views/Cart.vue";
-import Profile from "../views/Profile.vue";
-import ChangePassword from "../views/ChangePassword.vue";
-
-import Register from "../views/Register.vue";
-import Login from "../views/Login.vue";
-import ProductDetail from "../views/ProductDetail.vue"; // ✅ 新增：详情页
-import NotFound from "../views/NotFound.vue";
-
 const routes = [
-  {
-    path: "/",
-    component: HomeLayout,
-    children: [
-      { path: "", redirect: "/home" },
-      { path: "home", component: Home },
-      { path: "category", component: Category },
-      { path: "chat", component: Chat },
-      { path: "cart", component: Cart },
-      { path: "profile", component: Profile },
-      { path: "change-password", component: ChangePassword },
+  { path: "/", redirect: "/login" },
+  { path: "/login", component: () => import("../views/Login.vue") },
 
-      // 登录/注册页仍然在布局里（可按需调整）
-      { path: "register", component: Register },
-      { path: "login", component: Login },
-    ],
-  },
+  // 普通用户
+  { path: "/user/home", component: () => import("../views/user/Home.vue") },
 
-  // ✅ 商品详情页独立于 HomeLayout
-  {
-    path: "/product/:id",
-    component: ProductDetail,
-  },
+  // 商家后台
+  { path: "/seller/dashboard", component: () => import("../views/seller/Dashboard.vue") },
 
-  // ✅ 404 页面
-  {
-    path: "/:pathMatch(.*)*",
-    name: "NotFound",
-    component: NotFound,
-  },
+  // 管理员后台
+  { path: "/admin/dashboard", component: () => import("../views/admin/Dashboard.vue") },
+
+{
+  path: "/register",
+  name: "Register",
+  component: () => import("@/views/Register.vue"),
+}
+
+
+
+
+
+  // 其他路由...
 ];
 
 const router = createRouter({
