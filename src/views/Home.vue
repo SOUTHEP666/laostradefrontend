@@ -9,8 +9,16 @@
 
     <!-- 搜索与分类 -->
     <div class="search-bar">
-      <el-input v-model="searchKeyword" placeholder="搜索商品..." class="search-input" />
-      <el-button type="primary" icon="el-icon-search" @click="fetchAllProducts">搜索</el-button>
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索商品..."
+        class="search-input"
+        clearable
+      />
+      <!-- 这里搜索按钮可以保留，也可以去掉 -->
+      <el-button type="primary" icon="el-icon-search" @click="fetchAllProducts">
+        搜索
+      </el-button>
       <el-upload
         class="upload-image"
         :show-file-list="false"
@@ -67,24 +75,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { fetchProducts, uploadAndSearchByImage } from '@/api/products';
-import { fetchCategories } from '@/api/categories';
-import ProductCard from '@/components/ProductCard.vue';
-import FooterBar from '@/components/FooterBar.vue';
+import { ref, onMounted, watch } from "vue";
+import { fetchProducts, uploadAndSearchByImage } from "@/api/products";
+import { fetchCategories } from "@/api/categories";
+import ProductCard from "@/components/ProductCard.vue";
+import FooterBar from "@/components/FooterBar.vue";
 
 const products = ref([]);
 const categories = ref([]);
 const recommended = ref([]);
-const searchKeyword = ref('');
+const searchKeyword = ref("");
 const selectedCategory = ref(null);
 
 // 广告图轮播（假数据）
-const banners = [
-  '/ads/ad1.jpg',
-  '/ads/ad2.jpg',
-  '/ads/ad3.jpg'
-];
+const banners = ["/ads/ad1.jpg", "/ads/ad2.jpg", "/ads/ad3.jpg"];
 
 // 获取全部商品
 const fetchAllProducts = async () => {
@@ -92,39 +96,56 @@ const fetchAllProducts = async () => {
   if (searchKeyword.value) params.keyword = searchKeyword.value;
   if (selectedCategory.value) params.category_id = selectedCategory.value;
 
-  const res = await fetchProducts(params);
-  const data = res.data || [];
+  try {
+    const res = await fetchProducts(params);
+    const data = res.data || [];
 
-  products.value = data.map(item => ({
-    ...item,
-    firstImage: Array.isArray(item.image_url)
-      ? item.image_url[0]
-      : (typeof item.image_url === 'string' && item.image_url.includes(','))
-        ? item.image_url.split(',')[0]
-        : item.image_url || '/default.jpg'
-  }));
+    products.value = data.map((item) => ({
+      ...item,
+      firstImage: Array.isArray(item.image_url)
+        ? item.image_url[0]
+        : typeof item.image_url === "string" && item.image_url.includes(",")
+        ? item.image_url.split(",")[0]
+        : item.image_url || "/default.jpg",
+    }));
 
-  recommended.value = products.value.slice(0, 4);
+    recommended.value = products.value.slice(0, 4);
+  } catch (error) {
+    console.error("获取商品失败:", error);
+  }
 };
+
+// 监听关键词变化，自动搜索
+watch(
+  searchKeyword,
+  () => {
+    fetchAllProducts();
+  },
+  { immediate: false }
+);
 
 // 图像搜索功能
 const handleImageSearch = async (file) => {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append("image", file);
 
-  const res = await uploadAndSearchByImage(formData);
-  const data = res.data || [];
+  try {
+    const res = await uploadAndSearchByImage(formData);
+    const data = res.data || [];
 
-  products.value = data.map(item => ({
-    ...item,
-    firstImage: Array.isArray(item.image_url)
-      ? item.image_url[0]
-      : (typeof item.image_url === 'string' && item.image_url.includes(','))
-        ? item.image_url.split(',')[0]
-        : item.image_url || '/default.jpg'
-  }));
+    products.value = data.map((item) => ({
+      ...item,
+      firstImage: Array.isArray(item.image_url)
+        ? item.image_url[0]
+        : typeof item.image_url === "string" && item.image_url.includes(",")
+        ? item.image_url.split(",")[0]
+        : item.image_url || "/default.jpg",
+    }));
 
-  recommended.value = products.value.slice(0, 4);
+    recommended.value = products.value.slice(0, 4);
+  } catch (error) {
+    console.error("图像搜索失败:", error);
+  }
 
   return false; // 阻止默认上传行为
 };
@@ -137,9 +158,13 @@ const filterByCategory = (id) => {
 
 // 页面加载时获取分类 & 商品
 onMounted(async () => {
-  const res = await fetchCategories();
-  categories.value = res.data || [];
-  fetchAllProducts();
+  try {
+    const res = await fetchCategories();
+    categories.value = res.data || [];
+    fetchAllProducts();
+  } catch (error) {
+    console.error("获取分类失败:", error);
+  }
 });
 </script>
 
