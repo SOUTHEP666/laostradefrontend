@@ -1,118 +1,99 @@
 <template>
-  <div class="auth-container">
-    <h2>{{ isRegister ? "注册" : "登录" }}</h2>
-    <form @submit.prevent="handleSubmit">
-      <div class="form-item">
-        <label>用户名：</label>
-        <input v-model="form.username" type="text" required />
-      </div>
-
-      <div class="form-item">
-        <label>密码：</label>
-        <input v-model="form.password" type="password" required />
-      </div>
-
-      <div v-if="isRegister" class="form-item">
-        <label>角色：</label>
-        <select v-model="form.role">
-          <option value="buyer">买家</option>
-          <option value="seller">商家</option>
-        </select>
-      </div>
-
-      <button type="submit">{{ isRegister ? "注册" : "登录" }}</button>
-      <button type="button" @click="toggleMode">
-        切换到 {{ isRegister ? "登录" : "注册" }}
-      </button>
+  <div class="login-container">
+    <h2>登录</h2>
+    <form @submit.prevent="handleLogin">
+      <input v-model="account" placeholder="用户名或邮箱" required />
+      <input type="password" v-model="password" placeholder="密码" required />
+      <button type="submit" :disabled="loading">登录</button>
     </form>
-
-    <p v-if="message" class="message">{{ message }}</p>
+    <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
+    <p style="margin-top: 12px;">
+      还没账号？
+      <button @click="goRegister" type="button" class="link-btn">去注册</button>
+    </p>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import axios from "axios";
+import request from "@/utils/request.js";
+import { useRouter } from "vue-router";
 
-const BASE_URL = "https://laostrade.onrender.com/api";
+const account = ref("");
+const password = ref("");
+const errorMsg = ref("");
+const loading = ref(false);
+const router = useRouter();
 
-const isRegister = ref(false);
-const message = ref("");
+async function handleLogin() {
+  errorMsg.value = "";
+  loading.value = true;
 
-const form = ref({
-  username: "",
-  password: "",
-  role: "buyer",
-});
+  try {
+    const res = await request.post("/auth/login", {
+      account: account.value,
+      password: password.value,
+    });
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
 
-function toggleMode() {
-  isRegister.value = !isRegister.value;
-  message.value = "";
-  // 清空表单数据
-  form.value = { username: "", password: "", role: "buyer" };
+    // 根据身份跳转
+    switch (res.data.user.role) {
+      case 1:
+        router.push("/buyer-home");
+        break;
+      case 2:
+        router.push("/seller-home");
+        break;
+      case 3:
+        router.push("/admin1-home");
+        break;
+      case 4:
+        router.push("/admin2-home");
+        break;
+      default:
+        router.push("/");
+    }
+  } catch (error) {
+    errorMsg.value = error.response?.data?.message || "登录失败";
+  } finally {
+    loading.value = false;
+  }
 }
 
-async function handleSubmit() {
-  message.value = "";
-  try {
-    if (isRegister.value) {
-      const res = await axios.post(`${BASE_URL}/auth/register`, form.value);
-      message.value = res.data.message || "注册成功！";
-    } else {
-      const res = await axios.post(`${BASE_URL}/auth/login`, {
-        username: form.value.username,
-        password: form.value.password,
-      });
-      message.value = "登录成功！Token: " + res.data.token;
-      localStorage.setItem("token", res.data.token);
-      // 这里可以触发登录后跳转等操作
-    }
-  } catch (err) {
-    if (err.response && err.response.data && err.response.data.message) {
-      message.value = err.response.data.message;
-    } else {
-      message.value = "请求失败，请重试";
-    }
-  }
+function goRegister() {
+  router.push("/register");
 }
 </script>
 
 <style scoped>
-.auth-container {
+.login-container {
   max-width: 400px;
   margin: 40px auto;
   padding: 20px;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  font-family: Arial, sans-serif;
 }
-
-.form-item {
-  margin-bottom: 16px;
-}
-
-.form-item label {
+input {
   display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-}
-
-.form-item input,
-.form-item select {
   width: 100%;
+  margin-bottom: 12px;
   padding: 8px;
   box-sizing: border-box;
 }
-
 button {
-  margin-right: 10px;
-  padding: 8px 16px;
-}
-
-.message {
-  margin-top: 20px;
+  width: 100%;
   padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
+}
+.error {
+  color: red;
+  margin-top: 8px;
+}
+.link-btn {
+  color: blue;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 </style>
