@@ -1,19 +1,34 @@
 import { createRouter, createWebHistory } from "vue-router";
+
 import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
-import BuyerHome from "@/views/BuyerHome.vue";
-import SellerHome from "@/views/MerchantApply.vue";
-import Admin1Home from "@/views/Admin1Home.vue";
-import Admin2Home from "@/views/Admin2Home.vue";
+
+import merchantRoutes from "./merchantRoutes.js";
+import adminRoutes from "./adminRoutes.js";
+import buyerRoutes from "./buyerRoutes.js";
+import superadminRoutes from "./superadminRoutes.js";
 
 const routes = [
-  { path: "/login", component: Login },
-  { path: "/register", component: Register },
-  { path: "/buyer-home", component: BuyerHome, meta: { roles: [1] } },
-  { path: "/seller-home", component: SellerHome, meta: { roles: [2] } },
-  { path: "/admin1-home", component: Admin1Home, meta: { roles: [3] } },
-  { path: "/admin2-home", component: Admin2Home, meta: { roles: [4] } },
   { path: "/", redirect: "/login" },
+
+  // 登录注册
+  { path: "/login", component: Login, meta: { requiresAuth: false } },
+  { path: "/register", component: Register, meta: { requiresAuth: false } },
+
+  // 超级管理员
+  ...superadminRoutes,
+
+  // 商家路由
+  ...merchantRoutes,
+
+  // 管理员路由
+  ...adminRoutes,
+
+  // 买家路由
+  ...buyerRoutes,
+
+  // 404重定向
+  { path: "/:pathMatch(.*)*", redirect: "/login" },
 ];
 
 const router = createRouter({
@@ -21,27 +36,56 @@ const router = createRouter({
   routes,
 });
 
-// 路由守卫
+// 路由守卫：鉴权 + 角色权限控制
 router.beforeEach((to, from, next) => {
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
+  const token = localStorage.getItem("token");
 
-  if (to.path === "/login" || to.path === "/register") {
-    next();
+  let user = {};
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    user = {};
+  }
+
+  console.log("当前用户：", user);
+  console.log("目标路由：", to.fullPath, to.meta);
+
+  // 不需要鉴权页面
+  if (to.meta.requiresAuth === false) {
+    if (token && (to.path === "/login" || to.path === "/register")) {
+      const roleHomeMap = {
+        superadmin: "/superadmin/dashboard",
+        admin: "/admin/dashboard",
+        merchant: "/merchant/dashboard",
+        buyer: "/buyer/home",
+      };
+      next(roleHomeMap[user.role] || "/login");
+    } else {
+      next();
+    }
     return;
   }
 
-  if (!user) {
-    // 未登录，跳转登录
+  // 需要登录但无token，跳登录
+  if (!token) {
     next("/login");
     return;
   }
 
-  if (to.meta.roles && !to.meta.roles.includes(user.role)) {
-    // 无权限，重定向到登录或其他页面
-    alert("无访问权限");
-    next("/login");
-    return;
+  // 需要鉴权页面，校验角色权限
+  if (to.meta.role) {
+    const roles = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role];
+    if (!user.role || !roles.includes(user.role)) {
+      // 角色不匹配，跳对应首页或登录
+      const roleHomeMap = {
+        superadmin: "/superadmin/dashboard",
+        admin: "/admin/dashboard",
+        merchant: "/merchant/dashboard",
+        buyer: "/buyer/home",
+      };
+      next(roleHomeMap[user.role] || "/login");
+      return;
+    }
   }
 
   next();
